@@ -1,0 +1,9 @@
+# C#-specific ignores
+.mono/
+data_*/
+.vs/
+.vscode/
+nupkg
+bin
+obj
+
