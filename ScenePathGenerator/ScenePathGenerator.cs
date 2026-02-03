@@ -16,100 +16,89 @@ namespace ScenePathGenerator;
 [Generator]
 public class ScenePathGenerator : IIncrementalGenerator
 {
+    private static readonly SymbolDisplayFormat FullyQualifiedNoGlobal = SymbolDisplayFormat.FullyQualifiedFormat
+        .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
+        .WithMemberOptions(SymbolDisplayMemberOptions.IncludeContainingType);
+
     /// <summary>
     /// Initialize method for the Scene Path generator.
     /// </summary>
     /// <param name="context"></param>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var classDecls = context.SyntaxProvider
-            .CreateSyntaxProvider(
-                predicate: static (x, _) => x is ClassDeclarationSyntax cds && cds.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)),
-                transform: static (x, _) => (ClassDecl: (ClassDeclarationSyntax)x.Node, Semantic: x.SemanticModel))
-            .Where(static x => x.ClassDecl != null);
-        var compilationAndClasses = context.CompilationProvider.Combine(classDecls.Collect());
+        var godotClassesProvider = context.SyntaxProvider
+            .CreateSyntaxProvider<(ClassDeclarationSyntax, INamedTypeSymbol)?>(
+                predicate: static (n, _) => n is ClassDeclarationSyntax cds && cds.IsPartial() && !cds.IsNested(),
+                transform: static (ctx, _) =>
+                {
+                    var cds = (ClassDeclarationSyntax)ctx.Node;
+                    INamedTypeSymbol? symbol = ctx.SemanticModel.GetDeclaredSymbol(cds);
+
+                    if (symbol?.BaseType == null || !symbol.BaseType.InheritsFrom("GodotSharp", "Godot.Node"))
+                        return null;
+
+                    if (Path.GetFileNameWithoutExtension(cds.SyntaxTree.FilePath) != symbol.Name)
+                        return null;
+
+                    return (cds, symbol);
+                })
+            .Where(x => x is not null)
+            .Select((x, _) => x!.Value)
+            .Collect();
         var projectRootProvider = context.AnalyzerConfigOptionsProvider
             .Select((prov, _) =>
             {
-                if (prov.GlobalOptions.TryGetValue("build_property.GodotProjectDir", out var v) && !string.IsNullOrWhiteSpace(v))
-                    return v;
-                if (prov.GlobalOptions.TryGetValue("build_property.ProjectDir", out v) && !string.IsNullOrWhiteSpace(v))
-                    return v;
+                if (prov.GlobalOptions.TryGetValue("build_property.GodotProjectDir", out var dir) && !string.IsNullOrWhiteSpace(dir))
+                    return dir;
+                if (prov.GlobalOptions.TryGetValue("build_property.ProjectDir", out dir) && !string.IsNullOrWhiteSpace(dir))
+                    return dir;
                 return null;
             });
-        var combined = compilationAndClasses.Combine(projectRootProvider);
-        context.RegisterSourceOutput(combined, FindAndGenerate);
+        var combined = godotClassesProvider.Combine(projectRootProvider);
+        context.RegisterSourceOutput(combined, VisitGodotScriptClass);
     }
 
-    private static void FindAndGenerate(
+    private static void VisitGodotScriptClass(
         SourceProductionContext spc,
-        (
-            (Compilation Comp, ImmutableArray<(ClassDeclarationSyntax cds, SemanticModel semModel)> Classes)
-            CompAndClasses,
-            string? ProjectRoot
-        ) data)
+        (ImmutableArray<(ClassDeclarationSyntax, INamedTypeSymbol)> Classes, string? GodotProjectDir) data)
     {
-        Compilation compilation = data.CompAndClasses.Comp;
-        var classes = data.CompAndClasses.Classes;
-        string projectRoot = data.ProjectRoot ?? "";
-
-        if (classes == null || classes.Length == 0)
+        if (string.IsNullOrWhiteSpace(data.GodotProjectDir))
             return;
 
-        INamedTypeSymbol? nodeBaseType = compilation.GetTypeByMetadataName("Godot.Node");
+        string projectDir = data.GodotProjectDir!;
 
-        if (nodeBaseType == null)
-            return;
-
-        foreach ((ClassDeclarationSyntax? cds, SemanticModel? semModel) in classes)
+        foreach ((ClassDeclarationSyntax cds, INamedTypeSymbol symbol) in data.Classes)
         {
-            if (semModel.GetDeclaredSymbol(cds) is not INamedTypeSymbol classSymbol)
-                continue;
-
-            bool isNodeClass = false;
-            INamedTypeSymbol? baseType = classSymbol.BaseType;
-
-            while (baseType != null)
-            {
-                if (SymbolEqualityComparer.Default.Equals(baseType.OriginalDefinition, nodeBaseType))
-                {
-                    isNodeClass = true;
-                    break;
-                }
-
-                baseType = baseType.BaseType;
-            }
-
-            if (!isNodeClass)
-                continue;
-
             string ns = string.Empty;
 
-            if (!classSymbol.ContainingNamespace.IsGlobalNamespace)
-                ns = $"namespace {classSymbol.ContainingNamespace.ToDisplayString()};\n";
+            if (!symbol.ContainingNamespace.IsGlobalNamespace)
+                ns = $"namespace {symbol.ContainingNamespace.ToDisplayString()};\n";
 
-            string filePath = cds.SyntaxTree.FilePath;
-
-            if (!filePath.EndsWith(".cs"))
-                continue;
-
-            string tscnPath = GetTscnPath(cds.SyntaxTree.FilePath, projectRoot);
+            string tscnPath = GetTscnPath(cds.SyntaxTree.FilePath, projectDir);
             string sourceText = $$"""
             // <auto-generated>
             using Godot;
 
             {{ns}}
-            public partial class {{classSymbol.Name}}
+            public partial class {{symbol.Name}}
             {
-                public static string ScenePath => "{{tscnPath}}";
-
-                public static PackedScene GetScene() => GD.Load<PackedScene>(ScenePath);
-
-                public static {{classSymbol.Name}} Instantiate() => GetScene().Instantiate<{{classSymbol.Name}}>();
+            #pragma warning disable CS0108
+                public static string TscnPath => "{{tscnPath}}";
+                public static PackedScene LoadPackedScene() => GD.Load<PackedScene>(TscnPath);
+                public static {{symbol.Name}} Instantiate() => LoadPackedScene().Instantiate<{{symbol.Name}}>();
+            #pragma warning restore CS0108
             }
             """;
 
-            spc.AddSource($"{classSymbol.Name}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+            string hintName = symbol
+                .ToDisplayString(NullableFlowState.NotNull, FullyQualifiedNoGlobal)
+                // AddSource() doesn't support @ prefix
+                .Replace("@", "")
+                // AddSource() doesn't support angle brackets
+                .Replace("<", "(Of ")
+                .Replace(">", ")");
+
+            spc.AddSource(hintName + "_ScenePath.g", SourceText.From(sourceText, Encoding.UTF8));
         }
     }
 
@@ -128,3 +117,37 @@ public class ScenePathGenerator : IIncrementalGenerator
         return "res://" + Uri.UnescapeDataString(relRoot.MakeRelativeUri(fullPath).ToString());
     }
 }
+
+internal static class ExtensionMethods
+{
+    internal static bool IsNested(this TypeDeclarationSyntax cds)
+        => cds.Parent is TypeDeclarationSyntax;
+
+    internal static bool IsPartial(this TypeDeclarationSyntax cds)
+        => cds.Modifiers.Any(SyntaxKind.PartialKeyword);
+
+    internal static bool InheritsFrom(this ITypeSymbol? symbol, string assemblyName, string typeFullName)
+    {
+        while (symbol != null)
+        {
+            if (symbol.ContainingAssembly?.Name == assemblyName &&
+                symbol.FullQualifiedNameOmitGlobal() == typeFullName)
+            {
+                return true;
+            }
+
+            symbol = symbol.BaseType;
+        }
+
+        return false;
+    }
+
+    private static string FullQualifiedNameOmitGlobal(this ITypeSymbol symbol)
+        => symbol.ToDisplayString(NullableFlowState.NotNull, FullyQualifiedFormatOmitGlobal);
+
+    private static SymbolDisplayFormat FullyQualifiedFormatOmitGlobal { get; } =
+        SymbolDisplayFormat.FullyQualifiedFormat
+            .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
+            .WithMemberOptions(SymbolDisplayMemberOptions.IncludeContainingType);
+}
+

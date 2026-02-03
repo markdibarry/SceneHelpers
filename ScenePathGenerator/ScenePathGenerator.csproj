@@ -16,14 +16,14 @@
     <DebugType>portable</DebugType>
 
     <Title>ScenePathGenerator</Title>
-    <Version>1.0.0</Version>
+    <Version>1.0.2</Version>
     <Description>Generates scene paths for Godot C# projects.</Description>
     <Copyright>© 2026 Mark DiBarry</Copyright>
     <Authors>Mark DiBarry</Authors>
     <Company>Mark DiBarry</Company>
 
     <PackageId>ScenePathGenerator</PackageId>
-    <PackageReleaseNotes>ScenePathGenerator release.</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated README</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>generator;utilities;godot;gamedev</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
