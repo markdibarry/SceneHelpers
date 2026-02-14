@@ -1,6 +1,6 @@
-# Scene Path Generator
+# Scene Helpers
 
-Adds static scene paths to Godot Nodes.
+Adds static scene paths to custom Godot Nodes and implements the IScene interface.
 
 ```cs
 /// <summary>
