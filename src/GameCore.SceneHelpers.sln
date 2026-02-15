@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SceneHelpers.Generator", "SceneHelpers.Generator\SceneHelpers.Generator.csproj", "{BA828A24-54FC-4332-81EC-53BE71993DBB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameCore.SceneHelpers.Generator", "GameCore.SceneHelpers.Generator\GameCore.SceneHelpers.Generator.csproj", "{BA828A24-54FC-4332-81EC-53BE71993DBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SceneHelpers.Core", "SceneHelpers.Core\SceneHelpers.Core.csproj", "{9125B606-3900-469E-BE20-93AC06712DEE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameCore.SceneHelpers.Core", "GameCore.SceneHelpers.Core\GameCore.SceneHelpers.Core.csproj", "{9125B606-3900-469E-BE20-93AC06712DEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SceneHelpers", "SceneHelpers\SceneHelpers.csproj", "{290014F7-0F45-4E11-8FAA-820B024A8BD0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameCore.SceneHelpers", "GameCore.SceneHelpers\GameCore.SceneHelpers.csproj", "{290014F7-0F45-4E11-8FAA-820B024A8BD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

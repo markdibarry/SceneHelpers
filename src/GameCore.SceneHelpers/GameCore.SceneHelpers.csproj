@@ -16,14 +16,14 @@
     <DebugType>portable</DebugType>
 
     <Title>Scene Helpers</Title>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <Description>Generates scene paths for Godot C# projects.</Description>
     <Copyright>© 2026 Mark DiBarry</Copyright>
     <Authors>Mark DiBarry</Authors>
     <Company>Mark DiBarry</Company>
 
     <PackageId>GameCore.SceneHelpers</PackageId>
-    <PackageReleaseNotes>Updated README</PackageReleaseNotes>
+    <PackageReleaseNotes>Reorganized namespace</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>generator;utilities;godot;gamedev</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -31,7 +31,7 @@
     <PackageProjectUrl>https://github.com/markdibarry/SceneHelpers</PackageProjectUrl>
 
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>git@github.com:markdibarry/SceneHelpers.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/markdibarry/SceneHelpers.git</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,12 +42,12 @@
 
   <ItemGroup>
     <PackageReference Include="GodotSharp" Version="4.5.0" />
-    <ProjectReference Include="../SceneHelpers.Core/SceneHelpers.Core.csproj" Pack="false" PrivateAssets="all"/>
-    <ProjectReference Include="../SceneHelpers.Generator/SceneHelpers.Generator.csproj" Pack="false" PrivateAssets="all"/>
+    <ProjectReference Include="../GameCore.SceneHelpers.Core/GameCore.SceneHelpers.Core.csproj" Pack="false" PrivateAssets="all"/>
+    <ProjectReference Include="../GameCore.SceneHelpers.Generator/GameCore.SceneHelpers.Generator.csproj" Pack="false" PrivateAssets="all"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(OutputPath)\SceneHelpers.Core.dll" Pack="true" PackagePath="lib/net8.0/" />
-    <None Include="$(OutputPath)\SceneHelpers.Generator.dll" Pack="true" PackagePath="analyzers/dotnet/cs/" />
+    <None Include="$(OutputPath)\GameCore.SceneHelpers.Core.dll" Pack="true" PackagePath="lib/net8.0/" />
+    <None Include="$(OutputPath)\GameCore.SceneHelpers.Generator.dll" Pack="true" PackagePath="analyzers/dotnet/cs/" />
   </ItemGroup>
 </Project>
