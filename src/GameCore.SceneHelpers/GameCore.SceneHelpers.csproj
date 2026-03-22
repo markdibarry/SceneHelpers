@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -14,16 +14,17 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputPath>./nupkg</OutputPath>
     <DebugType>portable</DebugType>
+    <IsAotCompatible>true</IsAotCompatible>
 
     <Title>Scene Helpers</Title>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <Description>Generates scene paths for Godot C# projects.</Description>
     <Copyright>© 2026 Mark DiBarry</Copyright>
     <Authors>Mark DiBarry</Authors>
     <Company>Mark DiBarry</Company>
 
     <PackageId>GameCore.SceneHelpers</PackageId>
-    <PackageReleaseNotes>Reorganized namespace</PackageReleaseNotes>
+    <PackageReleaseNotes>Set as AOT compatible.</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>generator;utilities;godot;gamedev</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
